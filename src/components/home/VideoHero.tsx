@@ -7,8 +7,8 @@ import { gsap, SplitText, useGSAP } from '@/lib/gsap'
 import { cn } from '@/lib/utils'
 
 const media = {
-  desktop: { video: '/videos/tenq-hero.webm', poster: '/images/hero-fallback.webp', width: 1920, height: 1080 },
-  mobile: { video: '/videos/tenq-hero.webm', poster: '/images/personal.jpg', width: 720, height: 960 },
+  desktop: { video: '/videos/tenq_hero_video.webm', poster: '/images/hero_fallback.webp', width: 1920, height: 1080 },
+  mobile: { video: '/videos/tenq_hero_video.webm', poster: '/images/hero_fallback.webp', width: 720, height: 960 },
 }
 
 const DESKTOP_QUERY = '(min-width: 768px)'
@@ -89,7 +89,7 @@ export function VideoHero() {
         <picture>
           <source media={DESKTOP_QUERY} srcSet={posterDesktop.srcSet} />
           <source srcSet={posterMobile.srcSet} />
-          <img {...posterDesktop} alt="" className="absolute inset-0 size-full object-cover" />
+          <img {...posterDesktop} alt="" className="absolute inset-0 size-full object-cover object-top" />
         </picture>
 
         <video
