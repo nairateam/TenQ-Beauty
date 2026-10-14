@@ -443,6 +443,12 @@ async function seed() {
         { icon: 'lock', text: 'Secure Paystack checkout' },
       ],
       bagPaymentNote: 'Pay securely with Paystack — card, transfer or USSD',
+      announcements: [
+        'Website preview for Ten-Q Beauty — not the official store',
+        '5% off your first order — code HAIRRESS',
+        'Worldwide delivery',
+        'NAFDAC approved',
+      ],
       drawerNote: 'First order? Use code HAIRRESS for 5% off at checkout.',
       whatsappGreeting: 'Hi Ten-Q, I’d like some help with',
       trustPoints: [

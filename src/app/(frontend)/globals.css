@@ -13,15 +13,33 @@
   --font-display: var(--font-bodoni), ui-serif, Georgia, serif;
   --font-heading: var(--font-righteous), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
+
+  /* The announcement bar's loop: the track holds two identical halves and slides by one */
+  --animate-marquee: marquee 40s linear infinite;
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
 }
 
+/*
+ * The fixed header is the nav row plus the announcement bar (when Store settings has messages).
+ * Pages offset themselves by --header-height, so they make room for the bar automatically.
+ */
 :root {
-  --header-height: 4rem;
+  --nav-height: 4rem;
+  --announce-height: 0px;
+  --header-height: calc(var(--nav-height) + var(--announce-height));
+}
+
+:root.has-announcement {
+  --announce-height: 2.25rem;
 }
 
 @media (min-width: 64rem) {
   :root {
-    --header-height: 5.75rem; /* ~92px on desktop */
+    --nav-height: 5.75rem; /* ~92px on desktop */
   }
 }
 

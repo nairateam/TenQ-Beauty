@@ -7,12 +7,14 @@ import { useEffect, useState } from 'react'
 import { accountNav, mainNav } from '@/config/site'
 import { cn } from '@/lib/utils'
 
+import { AnnouncementBar } from './AnnouncementBar'
 import { CartLink } from './CartLink'
 import { Logo } from './Logo'
 import { MobileMenu } from './MobileMenu'
 import { NavLink } from './NavLink'
 
-export function Header() {
+/** `announcements` are the Store settings messages scrolling above the nav, if any. */
+export function Header({ announcements = [] }: { announcements?: string[] }) {
   const pathname = usePathname()
   const [hidden, setHidden] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -34,7 +36,8 @@ export function Header() {
         hidden && !menuOpen && '-translate-y-full',
       )}
     >
-      <div className="grid h-full grid-cols-[1fr_auto_1fr] items-center px-5 md:px-10 lg:px-15">
+      <AnnouncementBar messages={announcements} />
+      <div className="grid h-(--nav-height) grid-cols-[1fr_auto_1fr] items-center px-5 md:px-10 lg:px-15">
         {/* Left */}
         <div className="flex items-center">
           <nav aria-label="Main" className="hidden lg:block">

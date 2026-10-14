@@ -1859,6 +1859,10 @@ export interface Homepage {
  */
 export interface StoreSetting {
   id: string;
+  /**
+   * Short messages scrolling in the olive bar above the header, e.g. “Worldwide delivery”. Leave empty to hide the bar.
+   */
+  announcements?: string[] | null;
   shopTitle: string;
   /**
    * Write {products} and {collections} to show the live counts, e.g. “{products} products across {collections} collections.”
@@ -1983,6 +1987,7 @@ export interface HomepageSelect<T extends boolean = true> {
  * via the `definition` "store-settings_select".
  */
 export interface StoreSettingsSelect<T extends boolean = true> {
+  announcements?: T;
   shopTitle?: T;
   shopDescription?: T;
   promoTile?:

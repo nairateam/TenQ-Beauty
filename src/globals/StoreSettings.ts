@@ -16,6 +16,20 @@ export const StoreSettings: GlobalConfig = {
       type: 'tabs',
       tabs: [
         {
+          label: 'Announcement bar',
+          fields: [
+            {
+              name: 'announcements',
+              type: 'text',
+              hasMany: true,
+              admin: {
+                description:
+                  'Short messages scrolling in the olive bar above the header, e.g. “Worldwide delivery”. Leave empty to hide the bar.',
+              },
+            },
+          ],
+        },
+        {
           label: 'Shop page',
           fields: [
             { name: 'shopTitle', type: 'text', required: true, defaultValue: 'Shop all' },

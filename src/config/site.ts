@@ -10,11 +10,15 @@ export function serverURL() {
   return vercel ? `https://${vercel}` : 'http://localhost:3000'
 }
 
+/** Search engines may list the site only when ALLOW_INDEXING=true — off for previews. */
+export const allowIndexing = process.env.ALLOW_INDEXING === 'true'
+
 /** Site-wide settings and navigation. Edit here, not inside components. */
 export const siteConfig = {
-  name: 'TenQ',
+  name: 'Ten-Q Beauty',
   tagline: 'Beauty',
-  description: 'Online store built with Next.js and Payload CMS.',
+  description:
+    'Science-backed hair care made with natural African botanicals — for kinks, coils, curls, TWAs and locs.',
   url: serverURL(),
 }
 
