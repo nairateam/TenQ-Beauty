@@ -9,7 +9,6 @@ import { gsap, ScrollTrigger, SplitText, useGSAP } from '@/lib/gsap'
 import { cn } from '@/lib/utils'
 import type { RoutineStep } from '@/types/product'
 
-const TICK = 56 // resting stroke width (px)
 const STEP_DURATION = 5 // seconds each step stays active
 
 /* ---------- Section ---------- */
@@ -32,8 +31,8 @@ export function EssentialSteps({ steps }: { steps: RoutineStep[] }) {
     return () => st.kill()
   })
 
-  // The active stroke grows like a progress bar until it reaches the next step's marker,
-  // then the next step takes over. Hovering/focusing a step holds it fully grown.
+  // Only the active step has a stroke: it grows like a progress bar until it reaches the next
+  // step, then the next step takes over. Hovering/focusing a step holds it fully grown.
   useGSAP(
     () => {
       const items = gsap.utils.toArray<HTMLElement>('[data-step]', root.current)
@@ -43,7 +42,7 @@ export function EssentialSteps({ steps }: { steps: RoutineStep[] }) {
       if (!item || !bar) return
 
       bars.forEach((b, i) => {
-        if (i !== active) gsap.to(b, { width: TICK, duration: 0.5, ease: 'power2.out', overwrite: true })
+        if (i !== active) gsap.to(b, { width: 0, duration: 0.5, ease: 'power2.out', overwrite: true })
       })
 
       // Stretch across the column gap to the next marker when it sits in the same row.
@@ -52,13 +51,18 @@ export function EssentialSteps({ steps }: { steps: RoutineStep[] }) {
         next && next.offsetTop === item.offsetTop ? next.offsetLeft - item.offsetLeft : item.offsetWidth
 
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      if (paused || !inView || reduceMotion) {
+      if (paused || reduceMotion) {
         gsap.to(bar, { width: target, duration: 0.6, ease: 'power2.out', overwrite: true })
+        return
+      }
+      // Off screen the stroke waits where it is, so on entrance the first one fills from empty
+      if (!inView) {
+        gsap.killTweensOf(bar)
         return
       }
 
       const current = bar.offsetWidth
-      const remaining = Math.max(0, (target - current) / Math.max(1, target - TICK))
+      const remaining = Math.max(0, (target - current) / Math.max(1, target))
       gsap.to(bar, {
         width: target,
         duration: STEP_DURATION * remaining,
@@ -160,8 +164,8 @@ export function EssentialSteps({ steps }: { steps: RoutineStep[] }) {
                   onClick={() => setActive(i)}
                   className="group relative cursor-default outline-none focus-visible:ring-2 focus-visible:ring-olive/40 focus-visible:ring-offset-4"
                 >
-                  {/* Marker: width is driven by GSAP (progress towards the next step) */}
-                  <span data-bar aria-hidden className="relative z-10 block h-[2px] w-14 -translate-y-px bg-olive" />
+                  {/* Marker: width is driven by GSAP (progress towards the next step); empty when inactive */}
+                  <span data-bar aria-hidden className="relative z-10 block h-[2px] w-0 -translate-y-px bg-olive" />
 
                   <div className="flex items-center justify-between pt-9 pb-2">
                     <div>

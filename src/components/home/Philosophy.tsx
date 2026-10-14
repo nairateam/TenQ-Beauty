@@ -64,7 +64,7 @@ const branches: Branch[] = [
 ]
 
 /** Phones/tablets: a square crop of the same photo, centred on the serum */
-const mobilePhoto = { src: '/philosophy/bloom-circle.webp', alt: 'Bloom Hair Growth Serum with the Ten-Q range behind it' }
+const mobilePhoto = { src: '/philosophy/dazzle-oil.webp', alt: 'Bloom Hair Growth Serum with the Ten-Q range behind it' }
 
 /** Position of `el` relative to `ancestor`, ignoring CSS transforms (stable while animating). */
 function offsetWithin(el: HTMLElement, ancestor: HTMLElement) {
