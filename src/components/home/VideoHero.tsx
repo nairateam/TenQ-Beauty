@@ -120,8 +120,8 @@ export function VideoHero() {
         >
           Rooted in nature
         </h1>
-        <p data-hero-sub className="mt-5 max-w-[22ch] text-lg leading-[1.15] md:text-3xl lg:text-4xl">
-          made for every curl, coil and crown
+        <p data-hero-sub className="mt-5 max-w-[22ch] text-lg leading-[1.15] md:text-3xl font-light">
+          Made for every curl, coil and crown
         </p>
       </div>
     </section>
