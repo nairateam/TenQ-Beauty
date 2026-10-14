@@ -1,0 +1,54 @@
+{
+  "name": "payload-store",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev",
+    "build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build",
+    "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
+    "lint": "next lint",
+    "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
+    "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
+    "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
+    "seed": "cross-env NODE_OPTIONS=--no-deprecation payload run src/seed/index.ts",
+    "media:cloudinary": "cross-env NODE_OPTIONS=--no-deprecation payload run src/seed/media-to-cloudinary.ts"
+  },
+  "dependencies": {
+    "@gsap/react": "^2.1.2",
+    "@payloadcms/db-mongodb": "3.88.0",
+    "@payloadcms/next": "3.88.0",
+    "@payloadcms/plugin-cloud-storage": "3.88.0",
+    "@payloadcms/plugin-ecommerce": "3.88.0",
+    "@payloadcms/richtext-lexical": "3.88.0",
+    "@payloadcms/ui": "3.88.0",
+    "cloudinary": "^2.11.0",
+    "clsx": "^2.1.1",
+    "cross-env": "^10.1.0",
+    "graphql": "^16.8.2",
+    "gsap": "^3.13.0",
+    "lenis": "^1.3.4",
+    "next": "16.3.0",
+    "payload": "3.88.0",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "server-only": "^0.0.1",
+    "sharp": "0.34.2",
+    "stripe": "18.5.0",
+    "tailwind-merge": "^3.4.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/node": "^22.19.9",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "postcss": "^8.4.38",
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.6.11",
+    "tailwindcss": "^4.1.18",
+    "typescript": "5.7.2"
+  },
+  "engines": {
+    "node": "^18.20.2 || >=20.9.0"
+  }
+}

@@ -1,0 +1,49 @@
+@import 'tailwindcss';
+@import 'lenis/dist/lenis.css';
+
+/* Design tokens */
+@theme {
+  --color-background: #ffffff;
+  --color-foreground: #111111;
+  --color-brand: #2b1b14; /* deep brown for the logo / accents */
+  --color-cream: #f4f2ed;   /* soft warm section background */
+  --color-olive: #6f7d1f;   /* icon green, matches the Ten-Q label */
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-bodoni), ui-serif, Georgia, serif;
+  --font-heading: var(--font-righteous), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
+}
+
+:root {
+  --header-height: 4rem;
+}
+
+@media (min-width: 64rem) {
+  :root {
+    --header-height: 5.75rem; /* ~92px on desktop */
+  }
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
+/* Headings and titles share the wordmark's lettering. Righteous has a single weight,
+   so stop the browser faking bold from font-medium/semibold classes. */
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+    font-synthesis-weight: none;
+  }
+}
