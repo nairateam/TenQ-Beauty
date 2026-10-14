@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 
-import { useBag } from '@/lib/cart'
+import { previewOf, useBag } from '@/lib/cart'
 import { formatPrice } from '@/lib/format'
 import type { TocEntry } from '@/lib/queries/journal'
 import { cn } from '@/lib/utils'
@@ -306,7 +306,7 @@ export function AddText({ product }: { product: ShopProduct }) {
   return (
     <button
       type="button"
-      onClick={() => void add(product.id, product.variantID)}
+      onClick={() => void add(product.id, product.variantID, 1, previewOf(product))}
       disabled={!product.inStock}
       aria-label={product.inStock ? `Add ${product.title} to bag` : `${product.title} is sold out`}
       className="text-olive text-[10px] font-semibold tracking-[0.16em] uppercase hover:opacity-70 disabled:text-[#9A9B8A]"
@@ -376,7 +376,7 @@ export function ShopRoutine({
             </div>
             <button
               type="button"
-              onClick={() => void add(product.id, product.variantID)}
+              onClick={() => void add(product.id, product.variantID, 1, previewOf(product))}
               disabled={!product.inStock}
               aria-label={
                 product.inStock ? `Add ${product.title} to bag` : `${product.title} is sold out`
@@ -394,7 +394,9 @@ export function ShopRoutine({
           type="button"
           // Queued one after another, so they all land in the same bag
           onClick={() =>
-            available.forEach(({ product }) => void add(product.id, product.variantID))
+            available.forEach(
+              ({ product }) => void add(product.id, product.variantID, 1, previewOf(product)),
+            )
           }
           className="hover:bg-olive mt-4 flex w-full items-center justify-between bg-[#24260F] px-4 py-3.5 text-[11px] font-semibold tracking-[0.14em] text-white uppercase transition-colors"
         >

@@ -330,13 +330,7 @@ function LineItem({ item, bag }: { item: BagItem; bag: Bag }) {
           href={href}
           className="relative size-24 shrink-0 overflow-hidden bg-[#ECEBE4] md:size-[120px]"
         >
-          <Image
-            src={image.src}
-            alt={image.alt}
-            fill
-            sizes="120px"
-            className="object-cover"
-          />
+          <Image src={image.src} alt={image.alt} fill sizes="120px" className="object-cover" />
         </Link>
         <div className="flex min-w-0 flex-col gap-1.5 md:pr-6">
           <h3 className="font-sans text-[13px] font-semibold tracking-[0.06em] text-[#24260F] uppercase md:text-sm">
@@ -355,6 +349,7 @@ function LineItem({ item, bag }: { item: BagItem; bag: Bag }) {
             <button
               type="button"
               onClick={() => void bag.remove(key)}
+              disabled={item.pending}
               className="hover:text-[#24260F]"
             >
               Remove
@@ -362,6 +357,7 @@ function LineItem({ item, bag }: { item: BagItem; bag: Bag }) {
             <button
               type="button"
               onClick={() => void bag.saveForLater(key)}
+              disabled={item.pending}
               className="hover:text-[#24260F]"
             >
               Save for later
@@ -374,7 +370,8 @@ function LineItem({ item, bag }: { item: BagItem; bag: Bag }) {
         <Stepper
           title={title}
           quantity={quantity}
-          busy={bag.isLoading}
+          // Changes show at once, so only a line still being saved holds its stepper
+          busy={Boolean(item.pending)}
           onChange={(q) => void bag.setQuantity(key, q)}
         />
       </div>
@@ -393,7 +390,7 @@ function Stepper({
 }: {
   title: string
   quantity: number
-  /** A cart update is in flight — wait for it so presses don't race */
+  /** The line hasn't been saved yet — its stepper waits until it has */
   busy: boolean
   onChange: (q: number) => void
 }) {

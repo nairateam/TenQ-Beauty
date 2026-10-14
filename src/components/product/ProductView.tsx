@@ -5,7 +5,7 @@ import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { useEffect, useId, useRef, useState } from 'react'
 
-import { MAX_QUANTITY, useBag } from '@/lib/cart'
+import { MAX_QUANTITY, previewOf, useBag } from '@/lib/cart'
 import { formatPrice } from '@/lib/format'
 import { gsap, useGSAP } from '@/lib/gsap'
 import { reviewSummary } from '@/lib/reviews'
@@ -25,7 +25,9 @@ const icons = {
       <path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z" />
     </>
   ),
-  droplet: <path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z" />,
+  droplet: (
+    <path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z" />
+  ),
   sparkles: (
     <>
       <path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.14-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0L14.06 8.5A2 2 0 0 0 15.5 9.94l6.14 1.58a.5.5 0 0 1 0 .96L15.5 14.06a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0z" />
@@ -167,7 +169,10 @@ export function ProductView({ detail }: { detail: ProductDetail }) {
               <p data-fade className="mt-3 flex items-center gap-2 text-xs text-[#6B6C5A]">
                 <Stars rating={reviews.average} />
                 <span className="text-[#24260F]">{reviews.average.toFixed(1)}</span>·
-                <a href="#reviews" className="underline-offset-4 hover:text-[#24260F] hover:underline">
+                <a
+                  href="#reviews"
+                  className="underline-offset-4 hover:text-[#24260F] hover:underline"
+                >
                   {reviews.count} review{reviews.count > 1 && 's'}
                 </a>
               </p>
@@ -185,16 +190,13 @@ export function ProductView({ detail }: { detail: ProductDetail }) {
             </p>
 
             {sizes.length > 0 && (
-              <SizePicker
-                detail={detail}
-                selected={sizeLabel}
-                onSelect={setSizeLabel}
-              />
+              <SizePicker detail={detail} selected={sizeLabel} onSelect={setSizeLabel} />
             )}
 
             <Purchase
               detail={detail}
               variantID={size?.variantID}
+              sizeLabel={size?.label}
               price={price}
               inStock={size ? size.inStock : product.inStock}
             />
@@ -255,7 +257,6 @@ function Sep() {
     </li>
   )
 }
-
 
 function Gallery({ images, label }: { images: ProductDetail['gallery']; label?: string }) {
   const [active, setActive] = useState(0)
@@ -390,9 +391,7 @@ function SizePicker({
               key={s.label}
               className={cn(
                 'flex cursor-pointer flex-col items-center gap-1 border px-2 py-3 text-center transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[#24260F]',
-                isOn
-                  ? 'border-[#24260F] bg-[#F6F5EF]'
-                  : 'border-[#DDDCD0] hover:border-[#24260F]',
+                isOn ? 'border-[#24260F] bg-[#F6F5EF]' : 'border-[#DDDCD0] hover:border-[#24260F]',
               )}
             >
               <input
@@ -426,11 +425,13 @@ function SizePicker({
 function Purchase({
   detail,
   variantID,
+  sizeLabel,
   price,
   inStock,
 }: {
   detail: ProductDetail
   variantID?: string
+  sizeLabel?: string
   price: number
   inStock: boolean
 }) {
@@ -450,9 +451,16 @@ function Purchase({
 
   const addToBag = () => {
     setAdded(true)
-    // Queued in order, so the add-on lands in the cart the first add creates
-    void bag.add(product.id, variantID, quantity)
-    if (withAddOn && addOnProduct) void bag.add(addOnProduct.id, addOnProduct.variantID)
+    // Shown in the bag at once; saved in order, so the add-on lands in the cart the first add creates
+    void bag.add(
+      product.id,
+      variantID,
+      quantity,
+      previewOf(product, sizeLabel ? { label: sizeLabel, price } : undefined),
+    )
+    if (withAddOn && addOnProduct) {
+      void bag.add(addOnProduct.id, addOnProduct.variantID, 1, previewOf(addOnProduct))
+    }
   }
 
   return (
@@ -487,7 +495,7 @@ function Purchase({
           type="button"
           onClick={addToBag}
           disabled={!inStock}
-          className="hover:bg-olive disabled:hover:bg-[#24260F] flex h-14 disabled:cursor-not-allowed disabled:opacity-60 min-w-0 flex-1 items-center justify-between gap-3 bg-[#24260F] px-5 text-[12px] font-semibold tracking-[0.12em] text-white uppercase transition-colors"
+          className="hover:bg-olive flex h-14 min-w-0 flex-1 items-center justify-between gap-3 bg-[#24260F] px-5 text-[12px] font-semibold tracking-[0.12em] text-white uppercase transition-colors disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-[#24260F]"
         >
           <span aria-live="polite">
             {!inStock ? 'Sold out' : added ? 'Added to bag ✓' : 'Add to bag'}
@@ -531,13 +539,7 @@ function Purchase({
             className="accent-olive size-4 shrink-0"
           />
           <span className="relative size-11 shrink-0 overflow-hidden bg-white">
-            <Image
-              src={addOnProduct.image.src}
-              alt=""
-              fill
-              sizes="44px"
-              className="object-cover"
-            />
+            <Image src={addOnProduct.image.src} alt="" fill sizes="44px" className="object-cover" />
           </span>
           <span className="flex min-w-0 flex-1 flex-col">
             <span className="text-[13px] font-medium text-[#24260F]">{addOn.title}</span>

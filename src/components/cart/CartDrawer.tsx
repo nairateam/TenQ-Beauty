@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, type ReactNode } from 'react'
 
-import { bag as actions, MAX_QUANTITY, useBag, type BagItem } from '@/lib/cart'
+import { bag as actions, MAX_QUANTITY, previewOf, useBag, type BagItem } from '@/lib/cart'
 import { formatPrice } from '@/lib/format'
 import type { CheckoutSettings } from '@/lib/queries/shop'
 import { cn } from '@/lib/utils'
@@ -314,6 +314,8 @@ function Line({ item, fresh }: { item: BagItem; fresh: boolean }) {
           <button
             type="button"
             onClick={() => void bag.remove(item.key)}
+            // Its controls wait until the server has saved a just-added line
+            disabled={item.pending}
             aria-label={`Remove ${item.title}`}
             className="-mt-0.5 shrink-0 p-1 text-[#6B6C5A] hover:text-[#24260F]"
           >
@@ -338,6 +340,7 @@ function Line({ item, fresh }: { item: BagItem; fresh: boolean }) {
             <button
               type="button"
               onClick={() => void bag.setQuantity(item.key, item.quantity - 1)}
+              disabled={item.pending}
               aria-label="Decrease quantity"
               className={button}
             >
@@ -349,7 +352,7 @@ function Line({ item, fresh }: { item: BagItem; fresh: boolean }) {
             <button
               type="button"
               onClick={() => void bag.setQuantity(item.key, item.quantity + 1)}
-              disabled={item.quantity >= MAX_QUANTITY}
+              disabled={item.pending || item.quantity >= MAX_QUANTITY}
               aria-label="Increase quantity"
               className={button}
             >
@@ -442,7 +445,7 @@ function PairsWell({ products, inBag }: { products: ShopProduct[]; inBag: Set<st
             </div>
             <button
               type="button"
-              onClick={() => void bag.add(p.id, p.variantID)}
+              onClick={() => void bag.add(p.id, p.variantID, 1, previewOf(p))}
               aria-label={`Add ${p.title} to bag`}
               className="hover:bg-olive flex size-8 shrink-0 items-center justify-center rounded-full bg-[#24260F] text-white transition-colors"
             >

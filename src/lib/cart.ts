@@ -10,8 +10,11 @@ import type { ImageData } from '@/types/product'
 
 /*
  * The bag, stored in Payload's carts collection and changed through the ecommerce plugin's
- * cart endpoints. A guest's cart id and secret are kept in localStorage; prices, the promo
- * discount and the subtotal all come from the server.
+ * cart endpoints. A guest's cart id and secret are kept in localStorage; prices and the promo
+ * discount come from the server.
+ *
+ * Changes show instantly: an added item, a new quantity or a removal is drawn straight away and the
+ * server catches up in the background; if it refuses, the change is undone.
  *
  * Requests run one at a time, so quick clicks (or a product plus its add-on) can't race —
  * e.g. two adds before the cart exists would otherwise start two carts.
@@ -71,11 +74,42 @@ type State = {
   cart: Cart | null
   /** The slide-out bag, and the lines added since it last opened */
   drawer: { open: boolean; justAdded: string[] }
+  /** Adds shown in the bag before the server has saved them */
+  pending: PendingAdd[]
+  /** Quantities shown before the server has saved them, by line key (0 = removed) */
+  overrides: Record<string, number>
+}
+
+/** What the bag shows for an item it hasn't heard back about yet */
+export type AddPreview = {
+  title: string
+  slug: string
+  image: ImageData
+  /** Unit price in naira */
+  price: number
+  size?: string
+}
+
+type PendingAdd = {
+  key: string
+  productID: string
+  variantID?: string
+  quantity: number
+  preview?: AddPreview
 }
 
 const closed = { open: false, justAdded: [] }
-let state: State = { loaded: false, busy: false, cart: null, drawer: closed }
-const serverState: State = { loaded: false, busy: false, cart: null, drawer: closed }
+const empty: State = {
+  loaded: false,
+  busy: false,
+  cart: null,
+  drawer: closed,
+  pending: [],
+  overrides: {},
+}
+let state: State = empty
+const serverState: State = empty
+let pendingCount = 0
 const listeners = new Set<() => void>()
 let started = false
 
@@ -203,35 +237,84 @@ export class PaymentError extends Error {
   }
 }
 
-/** Everything that changes the bag. Each returns once the server has answered. */
+const lineFor = (productID: string, variantID?: string) =>
+  state.cart?.items?.find(
+    (i) => idOf(i.product) === productID && idOf(i.variant) === (variantID ?? null),
+  )
+
+/** Shows a line's new quantity at once, then saves it; the bag's own copy takes over after. */
+function withOverride(itemID: string, quantity: number, save: () => Promise<boolean>) {
+  set({ overrides: { ...state.overrides, [itemID]: quantity } })
+  return run(async () => {
+    try {
+      return await save()
+    } catch {
+      return false
+    } finally {
+      const { [itemID]: _done, ...rest } = state.overrides
+      set({ overrides: rest })
+    }
+  })
+}
+
+/** The details a card or product page already has, for drawing an added item at once. */
+export const previewOf = (
+  product: { title: string; slug: string; image: ImageData; price: number },
+  size?: { label: string; price: number },
+): AddPreview => ({
+  title: product.title,
+  slug: product.slug,
+  image: product.image,
+  price: size?.price ?? product.price,
+  size: size?.label,
+})
+
+/** Everything that changes the bag. Changes show at once; each returns once the server has answered. */
 export const bag = {
-  /** Adds to the bag, then opens the drawer with the line marked as just added. */
-  add: (productID: string, variantID?: string, quantity = 1) =>
-    run(async () => {
+  /**
+   * Adds to the bag and opens the drawer with the line marked as just added — straight away,
+   * using `preview` to draw a line the bag doesn't have yet, while the server saves it.
+   */
+  add: (productID: string, variantID?: string, quantity = 1, preview?: AddPreview) => {
+    const existing = lineFor(productID, variantID)
+    const key = existing?.id ?? `pending-${++pendingCount}`
+    const add: PendingAdd = { key, productID, variantID, quantity, preview }
+    const earlier = state.drawer.open ? state.drawer.justAdded : []
+    set({
+      pending: [...state.pending, add],
+      drawer: { open: true, justAdded: [...earlier.filter((k) => k !== key), key] },
+    })
+
+    return run(async () => {
       const ok = await cartAction('add-item', {
         item: { product: productID, ...(variantID ? { variant: variantID } : {}) },
         quantity: Math.min(MAX_QUANTITY, quantity),
+      }).catch(() => false)
+      // Swap the stand-in for the saved line (or drop it if the server said no)
+      const saved = lineFor(productID, variantID)?.id
+      set({
+        pending: state.pending.filter((p) => p !== add),
+        drawer: {
+          ...state.drawer,
+          justAdded: state.drawer.justAdded.flatMap((k) =>
+            k !== key ? [k] : ok && saved ? [saved] : [],
+          ),
+        },
       })
-      const line = state.cart?.items?.find(
-        (i) => idOf(i.product) === productID && idOf(i.variant) === (variantID ?? null),
-      )
-      if (ok && line?.id) {
-        const earlier = state.drawer.open ? state.drawer.justAdded : []
-        set({
-          drawer: { open: true, justAdded: [...earlier.filter((k) => k !== line.id), line.id] },
-        })
-      }
       return ok
-    }),
+    })
+  },
   openDrawer: () => set({ drawer: { open: true, justAdded: [] } }),
   closeDrawer: () => set({ drawer: closed }),
-  setQuantity: (itemID: string, quantity: number) =>
-    run(() =>
-      quantity < 1
+  setQuantity: (itemID: string, quantity: number) => {
+    const next = Math.max(0, Math.min(MAX_QUANTITY, quantity))
+    return withOverride(itemID, next, () =>
+      next < 1
         ? cartAction('remove-item', { itemID })
-        : cartAction('update-item', { itemID, quantity: Math.min(MAX_QUANTITY, quantity) }),
-    ),
-  remove: (itemID: string) => run(() => cartAction('remove-item', { itemID })),
+        : cartAction('update-item', { itemID, quantity: next }),
+    )
+  },
+  remove: (itemID: string) => withOverride(itemID, 0, () => cartAction('remove-item', { itemID })),
   saveForLater: (itemID: string) =>
     run(async () => {
       const line = state.cart?.items?.find((i) => i.id === itemID)
@@ -334,6 +417,8 @@ export type BagItem = {
   quantity: number
   unitPrice: number
   lineTotal: number
+  /** Shown before the server has saved it — its controls wait until it has */
+  pending?: boolean
 }
 
 export type SavedItem = {
@@ -375,8 +460,12 @@ function collectionLine(product: Product) {
   return names.length === 1 ? `${names[0]} Collection` : names.join(' · ')
 }
 
-function readCart(cart: Cart | null) {
-  const items: BagItem[] = (cart?.items ?? []).flatMap((item) => {
+function readCart(
+  cart: Cart | null,
+  pending: PendingAdd[] = [],
+  overrides: Record<string, number> = {},
+) {
+  const stored: BagItem[] = (cart?.items ?? []).flatMap((item) => {
     const product = isDoc(item.product) ? item.product : null
     if (!product || !item.id) return []
     const variant = isDoc(item.variant) ? item.variant : null
@@ -399,6 +488,36 @@ function readCart(cart: Cart | null) {
     ]
   })
 
+  // Layer on what hasn't been saved yet: new quantities and removals, then adds
+  let items = stored.flatMap((item) => {
+    const quantity = overrides[item.key] ?? item.quantity
+    return quantity > 0 ? [{ ...item, quantity, lineTotal: item.unitPrice * quantity }] : []
+  })
+  for (const add of pending) {
+    const match = items.find((i) => i.productID === add.productID && i.variantID === add.variantID)
+    if (match) {
+      const quantity = Math.min(MAX_QUANTITY, match.quantity + add.quantity)
+      items = items.map((i) =>
+        i === match ? { ...i, quantity, lineTotal: i.unitPrice * quantity } : i,
+      )
+    } else if (add.preview) {
+      items.push({
+        key: add.key,
+        productID: add.productID,
+        variantID: add.variantID,
+        slug: add.preview.slug,
+        title: add.preview.title,
+        image: add.preview.image,
+        collectionLine: '',
+        size: add.preview.size,
+        quantity: add.quantity,
+        unitPrice: add.preview.price,
+        lineTotal: add.preview.price * add.quantity,
+        pending: true,
+      })
+    }
+  }
+
   const saved: SavedItem[] = (cart?.savedItems ?? []).flatMap((s) => {
     const product = isDoc(s.product) ? s.product : null
     if (!product || !s.id) return []
@@ -418,8 +537,15 @@ function readCart(cart: Cart | null) {
   })
 
   const promo = cart?.promo as CartPromo | null | undefined
-  const subtotal = toNaira(cart?.subtotal)
-  const discount = toNaira(promo?.discount)
+  // Worked out from the lines shown, so it moves with them; it matches the server's once saved
+  const subtotal = items.reduce((n, i) => n + i.lineTotal, 0)
+  const serverSubtotal = toNaira(cart?.subtotal)
+  const serverDiscount = toNaira(promo?.discount)
+  // A percentage code scales with the bag until the server's figure comes back
+  const discount =
+    serverSubtotal > 0 && subtotal !== serverSubtotal
+      ? Math.min(subtotal, Math.round((serverDiscount * subtotal) / serverSubtotal))
+      : serverDiscount
 
   return {
     items,
@@ -442,7 +568,10 @@ export function useBag() {
     () => state,
     () => serverState,
   )
-  const view = useMemo(() => readCart(snapshot.cart), [snapshot.cart])
+  const view = useMemo(
+    () => readCart(snapshot.cart, snapshot.pending, snapshot.overrides),
+    [snapshot.cart, snapshot.pending, snapshot.overrides],
+  )
   return {
     /** The stored cart has been read — until then, don't show an empty bag */
     ready: snapshot.loaded,

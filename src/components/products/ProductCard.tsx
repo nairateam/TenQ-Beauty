@@ -21,7 +21,7 @@ export function ProductCard({
   priority = false,
   subtitleHref,
 }: ProductCardProps) {
-  const { id, slug, title, subtitle, price, fromPrice, image, badge, variantID, inStock } = product
+  const { slug, title, subtitle, price, fromPrice, image, badge } = product
   const href = `/shop/${slug}`
 
   return (
@@ -66,7 +66,7 @@ export function ProductCard({
             {fromPrice && 'From '}
             <span className="tabular-nums">{formatPrice(price)}</span>
           </p>
-          <AddToBagButton productID={id} variantID={variantID} title={title} inStock={inStock} />
+          <AddToBagButton product={product} />
         </div>
       </div>
     </article>

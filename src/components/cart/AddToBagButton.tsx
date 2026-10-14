@@ -2,26 +2,21 @@
 
 import { useEffect, useState } from 'react'
 
-import { useBag } from '@/lib/cart'
+import { previewOf, useBag } from '@/lib/cart'
 import { cn } from '@/lib/utils'
+import type { ProductCardData } from '@/types/product'
 
-/** "Add to bag +" text button — adds one and confirms for a moment. */
+/** "Add to bag +" text button — adds one (its cheapest size in stock) and confirms for a moment. */
 export function AddToBagButton({
-  productID,
-  variantID,
-  title,
-  inStock = true,
+  product,
   className,
 }: {
-  productID: string
-  /** The size to add, for products that come in several */
-  variantID?: string
-  title: string
-  inStock?: boolean
+  product: ProductCardData
   className?: string
 }) {
   const { add } = useBag()
   const [added, setAdded] = useState(false)
+  const { id, variantID, title, inStock } = product
 
   useEffect(() => {
     if (!added) return
@@ -34,7 +29,8 @@ export function AddToBagButton({
       type="button"
       disabled={!inStock}
       onClick={() => {
-        void add(productID, variantID)
+        // Shows in the bag straight away; the server saves it in the background
+        void add(id, variantID, 1, previewOf(product))
         setAdded(true)
       }}
       aria-label={inStock ? `Add ${title} to bag` : `${title} is sold out`}
