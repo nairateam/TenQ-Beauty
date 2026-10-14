@@ -23,7 +23,9 @@ export default async function HomePage() {
       <Bestsellers products={bestsellers} />
       <div>
         <Philosophy />
-        <div className="bg-background relative z-20 shadow-[0_-24px_60px_rgba(0,0,0,0.18)] lg:-mt-[100vh]">
+        {/* Slides up over the pinned System Banner. At least a screen tall, so on large monitors
+            the banner never shows below it or behind the next section */}
+        <div className="bg-background relative z-20 shadow-[0_-24px_60px_rgba(0,0,0,0.18)] lg:-mt-[100vh] lg:flex lg:min-h-svh lg:flex-col lg:justify-center">
           {routine.length > 0 && <EssentialSteps steps={routine} />}
         </div>
       </div>

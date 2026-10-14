@@ -102,7 +102,13 @@ export function Salon() {
   )
 
   return (
-    <section ref={root} aria-labelledby="salon-title" className="relative z-0 bg-[#24260F]">
+    // overflow-hidden: the curtain starts a screen higher than the section, so it must only
+    // show inside it — otherwise on tall screens it peeks out above Testimonials
+    <section
+      ref={root}
+      aria-labelledby="salon-title"
+      className="relative z-0 overflow-hidden bg-[#24260F]"
+    >
       <div data-curtain className="relative lg:min-h-[max(47.5rem,100svh)]">
         {/* Photo — fills the section on desktop, a banner above the card on phones */}
         <div className="relative h-[34rem] overflow-hidden sm:h-[38rem] lg:absolute lg:inset-0 lg:h-auto">
