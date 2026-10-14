@@ -45,6 +45,8 @@ export const cloudinaryURL = (folder: string, filename: string) => {
     resource_type: 'image',
     type: 'upload',
     format: formatOf(filename),
+    // No "/v1/" in the address: uploads overwrite in place and are invalidated on the CDN
+    force_version: false,
   })
 }
 
